@@ -1,0 +1,23 @@
+name: Build PS2 Homebrew 3D
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ps2dev/ps2dev:latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Compile dengan Makefile
+      run: make clean all
+
+    - name: Upload file ELF
+      uses: actions/upload-artifact@v3
+      with:
+        name: ular-tangga-3d-elf
+        path: ular-tangga-3d.elf
