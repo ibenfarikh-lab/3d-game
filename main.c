@@ -6,6 +6,7 @@
 #include <packet.h>
 #include <dma.h>
 #include <gs_psm.h>
+#include <draw2d.h>
 
 static framebuffer_t frame;
 static zbuffer_t zbuf;
@@ -33,7 +34,7 @@ int main(int argc, char *argv[]) {
     dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
     dma_channel_fast_waits(DMA_CHANNEL_GIF);
 
-    // Alokasi ukuran packet yang cukup untuk menampung setup, clear, dan kotak
+    // Alokasi ukuran packet
     packet_t *packet = packet_init(50, PACKET_NORMAL);
 
     while (1) {
@@ -46,13 +47,33 @@ int main(int argc, char *argv[]) {
         // Bersihkan layar dengan warna latar belakang Biru
         q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 256.0f, frame.width, frame.height, 20, 40, 100);
 
-        // Gambar Papan (Kotak Abu-abu)
-        color_t color_papan = {160, 160, 160, 0, 0};
-        q = draw_rect_filled(q, &color_papan, 160, 100, 320, 312);
+        // 1. Gambar Papan (Kotak Abu-abu menggunakan rect_t)
+        rect_t papan_rect;
+        papan_rect.xpos = 160;
+        papan_rect.ypos = 100;
+        papan_rect.width = 320;
+        papan_rect.height = 312;
+        papan_rect.color.r = 160;
+        papan_rect.color.g = 160;
+        papan_rect.color.b = 160;
+        papan_rect.color.a = 0;
+        papan_rect.color.q = 0;
 
-        // Gambar Bidak (Kotak Kuning)
-        color_t color_bidak = {255, 255, 0, 0, 0};
-        q = draw_rect_filled(q, &color_bidak, 300, 230, 40, 40);
+        q = draw_rect_filled(q, 0, &papan_rect);
+
+        // 2. Gambar Bidak (Kotak Kuning menggunakan rect_t)
+        rect_t bidak_rect;
+        bidak_rect.xpos = 300;
+        bidak_rect.ypos = 230;
+        bidak_rect.width = 40;
+        bidak_rect.height = 40;
+        bidak_rect.color.r = 255;
+        bidak_rect.color.g = 255;
+        bidak_rect.color.b = 0;
+        bidak_rect.color.a = 0;
+        bidak_rect.color.q = 0;
+
+        q = draw_rect_filled(q, 0, &bidak_rect);
 
         q = draw_finish(q);
 
