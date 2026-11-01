@@ -8,33 +8,10 @@
 #include <gs_psm.h>
 #include <gs_gp.h>
 
-// Fungsi sprite presisi layar penuh
-qword_t *draw_box(qword_t *q, int r, int g, int b, int x1, int y1, int x2, int y2) {
-    q->dw[0] = GIF_SET_TAG(2, 1, 1, GS_SET_PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0), GIF_FLG_PACKED, 2);
-    q->dw[1] = GS_REG_RGBAQ | (GS_REG_XYZ2 << 4);
-    q++;
-
-    // Koordinat X dan Y dikalikan 16 (format fixed-point 12.4 PS2) langsung dari titik 0,0 layar
-    q->dw[0] = (u64)r | ((u64)g << 8) | ((u64)b << 16) | ((u64)128 << 24);
-    q->dw[1] = 0; 
-    q++;
-    q->dw[0] = GS_SET_XYZ(x1 << 4, y1 << 4, 0); 
-    q->dw[1] = 0; 
-    q++;
-
-    q->dw[0] = (u64)r | ((u64)g << 8) | ((u64)b << 16) | ((u64)128 << 24);
-    q->dw[1] = 0; 
-    q++;
-    q->dw[0] = GS_SET_XYZ(x2 << 4, y2 << 4, 0); 
-    q->dw[1] = 0; 
-    q++;
-
-    return q;
-}
-
 int main(int argc, char *argv[]) {
     SifInitRpc(0);
 
+    // Set PAL mode agar sinkron dengan BIOS Eropa
     graph_set_mode(GRAPH_MODE_INTERLACED, GRAPH_MODE_PAL, GRAPH_MODE_FIELD, GRAPH_ENABLE);
     
     framebuffer_t frame;
@@ -70,15 +47,16 @@ int main(int argc, char *argv[]) {
     while (1) {
         q = packet->data;
 
-        // 1. Bersihkan layar dengan warna Biru Tua
+        // 1. Bersihkan layar dengan latar belakang Biru Tua
         q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 256.0f, frame.width, frame.height, 20, 40, 100);
 
-        // 2. Gambar Papan (Kotak Abu-abu besar di tengah layar)
-        // X dari 120 sampai 520, Y dari 100 sampai 412
-        q = draw_box(q, 180, 180, 180, 120, 100, 520, 412);
+        // 2. Definisi warna objek
+        color_t warna_papan = {180, 180, 180, 128, 0};
+        color_t warna_bidak = {255, 255, 0, 128, 0};
 
-        // 3. Gambar Bidak (Kotak Kuning di tengah papan)
-        q = draw_box(q, 255, 255, 0, posX - 25, posY - 25, posX + 25, posY + 25);
+        // 3. Menggunakan draw_rect bawaan PS2SDK (Papan dan Bidak)
+        q = draw_rect(q, &warna_papan, 140, 100, 360, 312); // Papan (x, y, width, height)
+        q = draw_rect(q, &warna_bidak, posX - 20, posY - 20, 40, 40); // Bidak Kuning
 
         q = draw_finish(q);
         dma_channel_send_normal(DMA_CHANNEL_GIF, packet->data, q - packet->data, 0, 0);
