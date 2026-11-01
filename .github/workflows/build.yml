@@ -9,16 +9,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
+    # Baris 'container:' dihapus karena kita pakai Setup Action di bawah
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4 # Diubah ke v4
+      uses: actions/checkout@v4
+
+    - name: Setup Toolchain PS2Dev
+      uses: ps2dev/setup-ps2dev@v1 # Action resmi untuk menginstal PS2SDK
+      with:
+        default: true
 
     - name: Compile dengan Makefile
       run: make clean all
 
     - name: Upload file ELF
-      uses: actions/upload-artifact@v4 # Diubah ke v4
+      uses: actions/upload-artifact@v4
       with:
         name: ular-tangga-3d-elf
         path: ular-tangga-3d.elf
