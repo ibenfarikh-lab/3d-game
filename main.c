@@ -37,23 +37,26 @@ int main(int argc, char **argv) {
     dma_channel_send_normal(DMA_CHANNEL_GIF, packet->data, q - packet->data, 0, 0);
     draw_wait_finish();
 
-    // Variabel posisi bidak bergerak
+    // Posisi bidak
     int posX = 320;
     int posY = 224;
 
     while (1) {
         q = packet->data;
         
-        // 1. Bersihkan layar dengan warna latar belakang (Hitam)
+        // 1. Bersihkan layar (Background Hitam)
         q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 224.0f, frame.width, frame.height, 0, 0, 0);
 
-        // 2. Gambar Papan (Kotak besar di tengah)
-        color_t warna_papan = {100, 100, 100, 128, 0};
-        q = draw_quad(q, warna_papan, 120, 100, 520, 100, 520, 380, 120, 380);
+        // 2. Definisi Warna Aman (Tanpa Excess Elements Warning)
+        color_t warna_papan;
+        color_t warna_bidak;
+        
+        color_set(&warna_papan, 100, 100, 100, 128);
+        color_set(&warna_bidak, 255, 0, 0, 128);
 
-        // 3. Gambar Bidak (Kotak kecil merah yang bisa digeser)
-        color_t warna_bidak = {255, 0, 0, 128, 0};
-        q = draw_quad(q, warna_bidak, posX - 15, posY - 15, posX + 15, posY - 15, posX + 15, posY + 15, posX - 15, posY + 15);
+        // 3. Gambar Papan & Bidak (Menggunakan pointer q langsung sesuai standar fungsi draw modern)
+        q = draw_quad(q, &warna_papan, 120, 100, 520, 100, 520, 380, 120, 380);
+        q = draw_quad(q, &warna_bidak, posX - 15, posY - 15, posX + 15, posY - 15, posX + 15, posY + 15, posX - 15, posY + 15);
 
         q = draw_finish(q);
         dma_channel_send_normal(DMA_CHANNEL_GIF, packet->data, q - packet->data, 0, 0);
