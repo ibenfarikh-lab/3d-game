@@ -8,6 +8,31 @@
 #include <gs_psm.h>
 #include <gs_gp.h>
 
+// Fungsi mandiri untuk menggambar kotak (Sprite) tanpa bergantung pada fungsi bawaan SDK
+qword_t *draw_box(qword_t *q, int r, int g, int b, int a, int x1, int y1, int x2, int y2) {
+    q->dw[0] = GIF_SET_TAG(2, 1, 1, GS_SET_PRIM(GS_PRIM_SPRITE, 0, 0, 0, 0, 0, 0, 0, 0), GIF_FLG_PACKED, 2);
+    q->dw[1] = GS_REG_RGBAQ | (GS_REG_XYZ2 << 4);
+    q++;
+
+    // Titik 1 (Atas-Kiri)
+    q->dw[0] = (u64)r | ((u64)g << 8) | ((u64)b << 16) | ((u64)a << 24); 
+    q->dw[1] = 0; 
+    q++;
+    q->dw[0] = GS_SET_XYZ((x1 + 2048) << 4, (y1 + 2048) << 4, 0); 
+    q->dw[1] = 0; 
+    q++;
+
+    // Titik 2 (Bawah-Kanan)
+    q->dw[0] = (u64)r | ((u64)g << 8) | ((u64)b << 16) | ((u64)a << 24); 
+    q->dw[1] = 0; 
+    q++;
+    q->dw[0] = GS_SET_XYZ((x2 + 2048) << 4, (y2 + 2048) << 4, 0); 
+    q->dw[1] = 0; 
+    q++;
+
+    return q;
+}
+
 int main(int argc, char **argv) {
     SifInitRpc(0);
     dma_channel_initialize(DMA_CHANNEL_GIF, NULL, 0);
@@ -37,7 +62,7 @@ int main(int argc, char **argv) {
     dma_channel_send_normal(DMA_CHANNEL_GIF, packet->data, q - packet->data, 0, 0);
     draw_wait_finish();
 
-    // Posisi bidak
+    // Posisi awal bidak di layar
     int posX = 320;
     int posY = 224;
 
@@ -47,16 +72,11 @@ int main(int argc, char **argv) {
         // 1. Bersihkan layar (Background Hitam)
         q = draw_clear(q, 0, 2048.0f - 320.0f, 2048.0f - 224.0f, frame.width, frame.height, 0, 0, 0);
 
-        // 2. Definisi Warna Aman (Tanpa Excess Elements Warning)
-        color_t warna_papan;
-        color_t warna_bidak;
-        
-        color_set(&warna_papan, 100, 100, 100, 128);
-        color_set(&warna_bidak, 255, 0, 0, 128);
+        // 2. Gambar Papan (Kotak abu-abu di tengah)
+        q = draw_box(q, 100, 100, 100, 128, 120, 100, 520, 380);
 
-        // 3. Gambar Papan & Bidak (Menggunakan pointer q langsung sesuai standar fungsi draw modern)
-        q = draw_quad(q, &warna_papan, 120, 100, 520, 100, 520, 380, 120, 380);
-        q = draw_quad(q, &warna_bidak, posX - 15, posY - 15, posX + 15, posY - 15, posX + 15, posY + 15, posX - 15, posY + 15);
+        // 3. Gambar Bidak (Kotak merah kecil)
+        q = draw_box(q, 255, 0, 0, 128, posX - 15, posY - 15, posX + 15, posY + 15);
 
         q = draw_finish(q);
         dma_channel_send_normal(DMA_CHANNEL_GIF, packet->data, q - packet->data, 0, 0);
