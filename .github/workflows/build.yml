@@ -14,9 +14,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Install Make
+      run: sudo apt-get update && sudo apt-get install -y make
+
     - name: Compile dengan Docker PS2Dev
-      # Menggunakan docker run agar path PS2SDK dan make terbaca sempurna
-      run: docker run --rm -v ${{ github.workspace }}:/src -w /src ps2dev/ps2dev:latest make clean all
+      run: docker run --rm -v ${{ github.workspace }}:/src -w /src ps2dev/ps2dev:latest sh -c "apk add make && make clean all"
 
     - name: Upload file ELF
       uses: actions/upload-artifact@v4
